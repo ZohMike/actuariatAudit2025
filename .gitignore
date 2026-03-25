@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# Environnements virtuels
+.env
+.venv
+venv/
+env/
+
+# Données sensibles / volumineuses
+data/parquet/*.parquet
+data/cache/
+
+# Streamlit cache
+.streamlit/
+
+# macOS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.code-workspace
