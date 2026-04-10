@@ -96,31 +96,50 @@ class DataService:
         """Normalise le schéma d'un DataFrame."""
         transformations = []
         
-        # Nettoyage et typage de Branche
+        # Nettoyage et typage de Branche (uniquement si pas déjà string)
         if "Branche" in df.columns:
-            transformations.append(
-                pl.col("Branche").cast(pl.Utf8).str.strip_chars()
-            )
+            col_dtype = df["Branche"].dtype
+            if col_dtype != pl.Utf8:
+                transformations.append(
+                    pl.col("Branche").cast(pl.Utf8).str.strip_chars()
+                )
             
-        # Nettoyage et typage de Exercice
+        # Nettoyage et typage de Exercice (uniquement si pas déjà string)
         if "Exercice" in df.columns:
-            transformations.append(
-                pl.col("Exercice").cast(pl.Utf8)
-                .str.replace(r"\.0$", "")  # Enlève .0 à la fin (ex: 2023.0 -> 2023)
-                .str.strip_chars()
-            )
+            col_dtype = df["Exercice"].dtype
+            if col_dtype != pl.Utf8:
+                transformations.append(
+                    pl.col("Exercice").cast(pl.Utf8)
+                    .str.replace(r"\.0$", "")  # Enlève .0 à la fin (ex: 2023.0 -> 2023)
+                    .str.strip_chars()
+                )
 
-        # Nouvelle colonne prioritaire
+        # Colonnes numériques (uniquement si pas déjà float)
         if "PN_ACC" in df.columns:
-            transformations.append(pl.col("PN_ACC").cast(pl.Float64))
-            
+            if df["PN_ACC"].dtype != pl.Float64:
+                try:
+                    transformations.append(pl.col("PN_ACC").cast(pl.Float64))
+                except Exception:
+                    pass  # Ignore si conversion impossible
         if "Prime_Nette" in df.columns:
-            transformations.append(pl.col("Prime_Nette").cast(pl.Float64))
+            if df["Prime_Nette"].dtype != pl.Float64:
+                try:
+                    transformations.append(pl.col("Prime_Nette").cast(pl.Float64))
+                except Exception:
+                    pass
         if "Accessoires" in df.columns:
-            transformations.append(pl.col("Accessoires").cast(pl.Float64))
+            if df["Accessoires"].dtype != pl.Float64:
+                try:
+                    transformations.append(pl.col("Accessoires").cast(pl.Float64))
+                except Exception:
+                    pass
         
         if transformations:
-            df = df.with_columns(transformations)
+            try:
+                df = df.with_columns(transformations)
+            except Exception as e:
+                import streamlit as st
+                st.warning(f"Erreur normalisation schema: {e}")
         
         return df
     
