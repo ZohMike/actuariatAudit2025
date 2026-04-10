@@ -18,8 +18,9 @@ env/
 data/parquet/*.parquet
 data/cache/
 
-# Streamlit cache
-.streamlit/
+# Streamlit cache (garder config.toml)
+.streamlit/cache/
+.streamlit/credentials.toml
 
 # macOS
 .DS_Store

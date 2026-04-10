@@ -254,7 +254,6 @@ if len(files_by_year) == len(years):
         
         # PE
         recap_pe = CalculationService.compute_recap_pe(parquet_path, mapping_tuple)
-        recap_pe = CalculationService.compute_recap_pe(parquet_path, mapping_tuple)
         ResultsDisplay.display_production(recap_pe)
         st.text_area("💬 Commentaires (Production)", key="comment_recap_pe", height=200, value="""Etape 1 - Production Emise (PE)
 Base reglementaire : Art. 334-8 du Code CIMA - Les provisions techniques sont assises sur les primes emises par branche d'assurance. Les comptes 7022 (primes emises) et 7023 (accessoires) du plan comptable CIMA (Art. 431) enregistrent ces flux.

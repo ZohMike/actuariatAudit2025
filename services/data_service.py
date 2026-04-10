@@ -31,7 +31,7 @@ class DataService:
         return hasher.hexdigest()[:16]
     
     @staticmethod
-    def getparquet_path(files_hash: str) -> Path:
+    def get_parquet_path(files_hash: str) -> Path:
         """Retourne le chemin du fichier Parquet pour un hash donné"""
         # Mise à jour v4 pour structure par année
         return PARQUET_DIR / f"production_v4_{files_hash}.parquet"
@@ -96,21 +96,25 @@ class DataService:
         """Normalise le schéma d'un DataFrame."""
         transformations = []
         
-        # Nettoyage et typage de Branche (uniquement si pas déjà string)
         if "Branche" in df.columns:
-            col_dtype = df["Branche"].dtype
-            if col_dtype != pl.Utf8:
+            if df["Branche"].dtype == pl.Utf8:
+                transformations.append(pl.col("Branche").str.strip_chars())
+            else:
                 transformations.append(
                     pl.col("Branche").cast(pl.Utf8).str.strip_chars()
                 )
             
-        # Nettoyage et typage de Exercice (uniquement si pas déjà string)
         if "Exercice" in df.columns:
-            col_dtype = df["Exercice"].dtype
-            if col_dtype != pl.Utf8:
+            if df["Exercice"].dtype == pl.Utf8:
+                transformations.append(
+                    pl.col("Exercice")
+                    .str.replace(r"\.0$", "")
+                    .str.strip_chars()
+                )
+            else:
                 transformations.append(
                     pl.col("Exercice").cast(pl.Utf8)
-                    .str.replace(r"\.0$", "")  # Enlève .0 à la fin (ex: 2023.0 -> 2023)
+                    .str.replace(r"\.0$", "")
                     .str.strip_chars()
                 )
 
