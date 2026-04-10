@@ -10,6 +10,8 @@ import io
 import re
 from typing import Optional
 
+from utils.excel_io import read_excel_to_polars
+
 
 class SinistresService:
     """Service pour le traitement des données sinistres."""
@@ -146,8 +148,7 @@ class SinistresService:
                 if target_sheet is None:
                     target_sheet = sheet_names[0]
                 
-                buffer.seek(0)
-                df = pl.read_excel(buffer, sheet_name=target_sheet)
+                df = read_excel_to_polars(content, filename, sheet_name=target_sheet)
             
             # Normaliser et extraire les branches
             df_normalized = SinistresService.normalize_columns(df)
@@ -202,8 +203,7 @@ class SinistresService:
                 
                 sheet_info = f"{target_sheet} (feuilles: {', '.join(sheet_names)})"
                 
-                buffer.seek(0)
-                df = pl.read_excel(buffer, sheet_name=target_sheet)
+                df = read_excel_to_polars(content, filename, sheet_name=target_sheet)
             
             # Debug: Afficher les colonnes lues
             st.write(f"📄 **{filename}** → {sheet_info}")

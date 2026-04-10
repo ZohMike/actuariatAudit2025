@@ -8,6 +8,7 @@ import polars as pl
 import pandas as pd
 import io
 from config import DEFAULT_LOSS_RATIO
+from utils.excel_io import read_excel_to_polars
 
 
 def render_loss_ratio_form(branches: list[str], key_prefix: str = "") -> dict:
@@ -70,7 +71,11 @@ def _render_upload_mode(branches: list[str], key_prefix: str) -> dict:
             if uploaded_file.name.endswith('.csv'):
                 df_lr = pl.read_csv(uploaded_file)
             else:
-                df_lr = pl.read_excel(uploaded_file)
+                df_lr = read_excel_to_polars(
+                    uploaded_file.getvalue(),
+                    uploaded_file.name,
+                    sheet_name=0,
+                )
             
             # Vérifier les colonnes
             if "Branche" not in df_lr.columns or "Loss_Ratio" not in df_lr.columns:

@@ -13,6 +13,7 @@ from config import (
     PARQUET_COMPRESSION,
     PARQUET_ROW_GROUP_SIZE
 )
+from utils.excel_io import read_excel_to_polars
 
 
 class DataService:
@@ -63,7 +64,7 @@ class DataService:
             buffer = io.BytesIO(content)
             
             if filename.endswith('.xlsx') or filename.endswith('.xls'):
-                df = pl.read_excel(buffer)
+                df = read_excel_to_polars(content, filename, sheet_name=0)
             else:
                 df = pl.read_csv(buffer)
             
