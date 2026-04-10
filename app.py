@@ -142,7 +142,7 @@ if len(files_by_year) == len(years):
         df_full = pl.read_parquet(parquet_path)
         
         st.write("**Aperçu (10 lignes):**")
-        st.dataframe(df_full.head(10), use_container_width=True)
+        st.dataframe(df_full.head(10), width="stretch")
         
         st.divider()
         st.subheader("📊 Vérification des totaux AVANT mapping")
@@ -170,7 +170,7 @@ if len(files_by_year) == len(years):
             pl.col("PE").map_elements(lambda x: f"{x:,.2f}".replace(",", " "), return_dtype=pl.Utf8),
             pl.col("Nb_Lignes").map_elements(lambda x: f"{x:,}".replace(",", " "), return_dtype=pl.Utf8),
         ])
-        st.dataframe(pe_by_exercice_fmt, use_container_width=True)
+        st.dataframe(pe_by_exercice_fmt, width="stretch")
         
         # Par branche originale
         st.write("**PE par Branche originale (PN_ACC, nulls=0):**")
@@ -183,7 +183,7 @@ if len(files_by_year) == len(years):
             pl.col("PE").map_elements(lambda x: f"{x:,.2f}".replace(",", " "), return_dtype=pl.Utf8),
             pl.col("Nb_Lignes").map_elements(lambda x: f"{x:,}".replace(",", " "), return_dtype=pl.Utf8),
         ])
-        st.dataframe(pe_by_branche_fmt, use_container_width=True)
+        st.dataframe(pe_by_branche_fmt, width="stretch")
 
     # Mapping
     branches_observees = DataService.get_unique_branches(parquet_path)
@@ -227,7 +227,7 @@ if len(files_by_year) == len(years):
             formatted_cols.append(
                 pl.col(col).map_elements(lambda x: f"{x:,.2f}".replace(",", " "), return_dtype=pl.Utf8).alias(col)
             )
-        st.dataframe(pe_pivot.select(formatted_cols), use_container_width=True)
+        st.dataframe(pe_pivot.select(formatted_cols), width="stretch")
         
         # Total par exercice après mapping
         st.write("**Total PE par Exercice APRÈS mapping:**")
@@ -237,7 +237,7 @@ if len(files_by_year) == len(years):
         total_by_ex_fmt = total_by_ex.with_columns(
             pl.col("PE_Total").map_elements(lambda x: f"{x:,.2f}".replace(",", " "), return_dtype=pl.Utf8)
         )
-        st.dataframe(total_by_ex_fmt, use_container_width=True)
+        st.dataframe(total_by_ex_fmt, width="stretch")
     
     st.divider()
     
@@ -499,7 +499,7 @@ Le tableau PSAP Final consolide ces trois composantes pour obtenir la provision 
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                     key="dl_full_report",
                     type="primary",
-                    use_container_width=True
+                    width="stretch"
                 )
             with col_pdf:
                 st.download_button(
@@ -509,7 +509,7 @@ Le tableau PSAP Final consolide ces trois composantes pour obtenir la provision 
                     mime="application/pdf",
                     key="dl_full_report_pdf",
                     type="primary",
-                    use_container_width=True
+                    width="stretch"
                 )
         
     else:

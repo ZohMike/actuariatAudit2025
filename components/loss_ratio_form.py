@@ -53,7 +53,7 @@ def _render_upload_mode(branches: list[str], key_prefix: str) -> dict:
             data=output.getvalue(),
             file_name=f"template_loss_ratios_{key_prefix}.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            use_container_width=True,
+            width="stretch",
             key=f"dl_template_{key_prefix}"
         )
     
@@ -79,7 +79,7 @@ def _render_upload_mode(branches: list[str], key_prefix: str) -> dict:
             
             # Afficher aperçu
             st.success(f"✅ Fichier chargé: {len(df_lr)} branches")
-            st.dataframe(df_lr, use_container_width=True, hide_index=True)
+            st.dataframe(df_lr, width="stretch", hide_index=True)
             
             # Convertir en dictionnaire
             loss_ratios = {}
@@ -95,7 +95,7 @@ def _render_upload_mode(branches: list[str], key_prefix: str) -> dict:
                     st.warning(f"⚠️ Branche '{branche}' non trouvée dans le fichier, valeur par défaut: {DEFAULT_LOSS_RATIO}")
             
             # Bouton de validation
-            if st.button("✅ Valider les Loss Ratios", type="primary", use_container_width=True, key=f"validate_lr_upload_{key_prefix}"):
+            if st.button("✅ Valider les Loss Ratios", type="primary", width="stretch", key=f"validate_lr_upload_{key_prefix}"):
                 for branche, lr in loss_ratios.items():
                     st.session_state[f'lr_saved_{branche}_{key_prefix}'] = lr
                 st.session_state[f'loss_ratios_valides_{key_prefix}'] = loss_ratios
@@ -140,7 +140,7 @@ def _render_manual_mode(branches: list[str], key_prefix: str) -> dict:
         submitted = st.form_submit_button(
             "✅ Valider les Loss Ratios",
             type="primary",
-            use_container_width=True
+            width="stretch"
         )
     
     if submitted:

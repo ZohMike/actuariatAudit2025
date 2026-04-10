@@ -32,11 +32,11 @@ def render_sidebar() -> tuple:
             data=create_production_template(),
             file_name="template_production.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            use_container_width=True
+            width="stretch"
         )
         
         st.divider()
-        if st.button("🔄 Vider le cache", use_container_width=True, type="secondary"):
+        if st.button("🔄 Vider le cache", width="stretch", type="secondary"):
             st.cache_data.clear()
             from config import PARQUET_DIR
             import shutil

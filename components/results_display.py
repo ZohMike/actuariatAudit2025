@@ -62,7 +62,7 @@ def style_dataframe(df: pl.DataFrame, highlight_total: bool = False) -> None:
         ]}
     ])
     
-    st.dataframe(styled, use_container_width=True, hide_index=True)
+    st.dataframe(styled, width="stretch", hide_index=True)
 
 
 def format_dataframe_numbers(df: pl.DataFrame) -> pl.DataFrame:
@@ -121,7 +121,7 @@ class ResultsDisplay:
             ]}
         ])
         
-        st.dataframe(styled, use_container_width=True, hide_index=True)
+        st.dataframe(styled, width="stretch", hide_index=True)
     
     @staticmethod
     def display_prec(recap_prec: pl.DataFrame, erreurs: pl.DataFrame) -> None:
@@ -131,7 +131,7 @@ class ResultsDisplay:
         if not erreurs.is_empty():
             st.warning(f"⚠️ {len(erreurs)} ligne(s) avec date effet > échéance")
             with st.expander("Voir les erreurs"):
-                st.dataframe(erreurs, use_container_width=True, hide_index=True)
+                st.dataframe(erreurs, width="stretch", hide_index=True)
         
         style_dataframe(recap_prec)
     
@@ -369,7 +369,7 @@ class ResultsDisplay:
                 mapping_validated = st.form_submit_button(
                     "✅ Valider le mapping et calculer",
                     type="primary",
-                    use_container_width=True
+                    width="stretch"
                 )
             
             if mapping_validated:
@@ -668,7 +668,7 @@ class ResultsDisplay:
             column_config=column_config,
             hide_index=True,
             key=f"psap_manual_editor_{uploaded_psap.name if uploaded_psap else 'default'}",
-            use_container_width=True
+            width="stretch"
         )
         
         # Préparer les surcharges manuelles : Santé (formulaire) + Dommages Corporels (SAP+IBNR)

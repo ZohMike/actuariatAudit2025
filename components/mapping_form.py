@@ -43,7 +43,7 @@ def render_mapping_form(branches_observees: list[str]) -> dict:
         submitted = st.form_submit_button(
             "✅ Valider le mapping",
             type="primary",
-            use_container_width=True
+            width="stretch"
         )
     
     if submitted:
