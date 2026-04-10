@@ -114,25 +114,26 @@ class DataService:
                     .str.strip_chars()
                 )
 
+        # Fonction utilitaire pour parser les montants avec espaces et virgules
+        def _parse_amount(col_name: str):
+            return (
+                pl.col(col_name)
+                .cast(pl.Utf8)
+                .str.replace_all(r"\s+", "")  # Enlève les espaces (ex: "30 669" -> "30669")
+                .str.replace_all(r",", ".")   # Virgules en points (ex: "30,5" -> "30.5")
+                .cast(pl.Float64, strict=False) # strict=False met à null si erreur
+            )
+
         # Colonnes numériques (uniquement si pas déjà float)
         if "PN_ACC" in df.columns:
             if df["PN_ACC"].dtype != pl.Float64:
-                try:
-                    transformations.append(pl.col("PN_ACC").cast(pl.Float64))
-                except Exception:
-                    pass  # Ignore si conversion impossible
+                transformations.append(_parse_amount("PN_ACC"))
         if "Prime_Nette" in df.columns:
             if df["Prime_Nette"].dtype != pl.Float64:
-                try:
-                    transformations.append(pl.col("Prime_Nette").cast(pl.Float64))
-                except Exception:
-                    pass
+                transformations.append(_parse_amount("Prime_Nette"))
         if "Accessoires" in df.columns:
             if df["Accessoires"].dtype != pl.Float64:
-                try:
-                    transformations.append(pl.col("Accessoires").cast(pl.Float64))
-                except Exception:
-                    pass
+                transformations.append(_parse_amount("Accessoires"))
         
         if transformations:
             try:
