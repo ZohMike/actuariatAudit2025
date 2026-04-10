@@ -15,11 +15,11 @@ class CalculationService:
     
     @staticmethod
     @st.cache_data(ttl=3600, show_spinner=False)
-    def compute_recap_pe(_parquet_path: str, mapping: tuple) -> pl.DataFrame:
+    def compute_recap_pe(parquet_path: str, mapping: tuple) -> pl.DataFrame:
         """Calcule le tableau récapitulatif PE par Branche et Exercice."""
         mapping_dict = dict(mapping)
         
-        df = pl.read_parquet(_parquet_path)
+        df = pl.read_parquet(parquet_path)
         
         # Remplacer les Exercice null par "NR"
         df = df.with_columns(pl.col("Exercice").fill_null("NR"))
@@ -77,7 +77,7 @@ class CalculationService:
     @staticmethod
     @st.cache_data(ttl=3600, show_spinner=False)
     def compute_taux_prec(
-        _parquet_path: str,
+        parquet_path: str,
         mapping: tuple,
         loss_ratios: tuple,
         frais_generaux: float,
@@ -87,7 +87,7 @@ class CalculationService:
         mapping_dict = dict(mapping)
         loss_ratios_dict = dict(loss_ratios)
         
-        df = pl.read_parquet(_parquet_path)
+        df = pl.read_parquet(parquet_path)
         
         # Remplacer les Exercice null par "NR"
         df = df.with_columns(pl.col("Exercice").fill_null("NR"))
@@ -147,7 +147,7 @@ class CalculationService:
     @staticmethod
     @st.cache_data(ttl=3600, show_spinner="Calcul PREC en cours...")
     def compute_prec(
-        _parquet_path: str,
+        parquet_path: str,
         mapping: tuple,
         taux_prec: tuple,
         date_eval: date
@@ -161,7 +161,7 @@ class CalculationService:
             "Taux_PREC": list(taux_dict.values())
         })
         
-        df = pl.read_parquet(_parquet_path)
+        df = pl.read_parquet(parquet_path)
         
         # Remplacer les Exercice null par "NR"
         df = df.with_columns(pl.col("Exercice").fill_null("NR"))
@@ -605,7 +605,7 @@ class CalculationService:
     @staticmethod
     @st.cache_data(ttl=3600, show_spinner="Calcul IBNR Dommages Corporels...")
     def compute_ibnr_corporels(
-        _parquet_path: str,
+        parquet_path: str,
         mapping: tuple,
         date_eval: date,
         loss_ratio_marche: float = 0.72
@@ -626,7 +626,7 @@ class CalculationService:
         """
         mapping_dict = dict(mapping)
         
-        df = pl.read_parquet(_parquet_path)
+        df = pl.read_parquet(parquet_path)
         
         # Préparer les données
         df = df.with_columns([

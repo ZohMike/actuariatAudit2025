@@ -31,7 +31,7 @@ class DataService:
         return hasher.hexdigest()[:16]
     
     @staticmethod
-    def get_parquet_path(files_hash: str) -> Path:
+    def getparquet_path(files_hash: str) -> Path:
         """Retourne le chemin du fichier Parquet pour un hash donné"""
         # Mise à jour v4 pour structure par année
         return PARQUET_DIR / f"production_v4_{files_hash}.parquet"
@@ -53,14 +53,14 @@ class DataService:
     @staticmethod
     @st.cache_data(ttl=3600, show_spinner="Conversion Excel → Parquet...")
     def _do_conversion(
-        file_contents: list[tuple[str, str, bytes]],
+        _file_contents: list[tuple[str, str, bytes]],
         files_hash: str
     ) -> str:
         """Fonction interne cachée pour la conversion."""
         parquet_path = DataService.get_parquet_path(files_hash)
         
         dfs = []
-        for year, filename, content in file_contents:
+        for year, filename, content in _file_contents:
             buffer = io.BytesIO(content)
             
             if filename.endswith('.xlsx') or filename.endswith('.xls'):
@@ -146,16 +146,16 @@ class DataService:
     
     @staticmethod
     @st.cache_data(ttl=3600)
-    def get_unique_branches(_parquet_path: str) -> list[str]:
+    def get_unique_branches(parquet_path: str) -> list[str]:
         """Récupère les branches uniques."""
-        branches = pl.read_parquet(_parquet_path)["Branche"].unique().to_list()
+        branches = pl.read_parquet(parquet_path)["Branche"].unique().to_list()
         return sorted([b for b in branches if b is not None])
     
     @staticmethod
     @st.cache_data(ttl=3600)
-    def get_unique_exercices(_parquet_path: str) -> list[str]:
+    def get_unique_exercices(parquet_path: str) -> list[str]:
         """Récupère les exercices uniques (sans null)."""
-        exercices = pl.read_parquet(_parquet_path).select(
+        exercices = pl.read_parquet(parquet_path).select(
             pl.col("Exercice").fill_null("NR")
         )["Exercice"].unique().to_list()
         return sorted([e for e in exercices if e is not None])
@@ -167,9 +167,9 @@ class DataService:
     
     @staticmethod
     @st.cache_data(ttl=3600)
-    def get_file_stats(_parquet_path: str) -> dict:
+    def get_file_stats(parquet_path: str) -> dict:
         """Récupère les statistiques du fichier."""
-        df = pl.read_parquet(_parquet_path)
+        df = pl.read_parquet(parquet_path)
         return {
             "rows": len(df),
             "columns": len(df.columns),
