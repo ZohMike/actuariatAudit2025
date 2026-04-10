@@ -4,11 +4,77 @@ Lecture Excel vers Polars sans fastexcel (compatibilité Streamlit Cloud / Pytho
 Polars read_excel exige fastexcel, souvent indisponible pour certaines versions Python.
 openpyxl (.xlsx) et xlrd (.xls) sont déjà dans requirements.txt.
 """
+import datetime
 import io
 from typing import BinaryIO, Union
 
+import numpy as np
 import pandas as pd
 import polars as pl
+
+
+def _column_name_suggests_date(name: str) -> bool:
+    """N'applique pd.to_datetime qu'aux colonnes clairement liées aux dates (évite Police, montants, etc.)."""
+    n = str(name).lower().replace("é", "e").replace("è", "e").replace(" ", "")
+    return any(
+        k in n
+        for k in (
+            "effet",
+            "echeance",
+            "dateeffet",
+            "dateecheance",
+            "datedebut",
+            "datefin",
+            "souscription",
+        )
+    )
+
+
+def _sanitize_pandas_for_polars(pdf: pd.DataFrame) -> pd.DataFrame:
+    """
+    Évite ArrowTypeError : colonnes object avec types mixtes (int/str/bytes) font échouer
+    pl.from_pandas → PyArrow. On homogénéise avant conversion.
+    """
+    out = pdf.copy()
+    for col in out.columns:
+        s = out[col]
+        if pd.api.types.is_datetime64_any_dtype(s.dtype):
+            continue
+        if pd.api.types.is_bool_dtype(s.dtype):
+            continue
+        if pd.api.types.is_numeric_dtype(s.dtype):
+            continue
+        if isinstance(s.dtype, pd.CategoricalDtype):
+            out[col] = s.astype(str).replace("nan", pd.NA)
+            continue
+        if s.dtype != object and str(s.dtype) != "object":
+            continue
+
+        # Colonnes object : datetime seulement si le nom ressemble à Effet / Echeance / …
+        if _column_name_suggests_date(str(col)):
+            try:
+                as_dt = pd.to_datetime(s, errors="coerce", dayfirst=True)
+                nn = as_dt.notna().sum()
+                if nn > 0 and nn >= 0.4 * len(s):
+                    out[col] = as_dt
+                    continue
+            except Exception:
+                pass
+
+        def cell_to_str(x):
+            if x is None:
+                return ""
+            if isinstance(x, float) and np.isnan(x):
+                return ""
+            if isinstance(x, bytes):
+                return x.decode("utf-8", errors="replace")
+            if isinstance(x, (datetime.datetime, datetime.date, pd.Timestamp)):
+                return x.isoformat() if hasattr(x, "isoformat") else str(x)
+            return str(x)
+
+        out[col] = [cell_to_str(v) for v in s.tolist()]
+
+    return out
 
 
 def read_excel_to_polars(
@@ -45,4 +111,6 @@ def read_excel_to_polars(
         read_kw["dtype"] = str
 
     pdf = pd.read_excel(buf, sheet_name=sheet_name, engine=engine, **read_kw)
+    if not string_cells:
+        pdf = _sanitize_pandas_for_polars(pdf)
     return pl.from_pandas(pdf)
