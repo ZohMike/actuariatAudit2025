@@ -15,6 +15,8 @@ def read_excel_to_polars(
     source: Union[bytes, BinaryIO],
     filename: str,
     sheet_name: str | int = 0,
+    *,
+    string_cells: bool = False,
 ) -> pl.DataFrame:
     """
     Lit une feuille Excel et retourne un DataFrame Polars.
@@ -23,6 +25,7 @@ def read_excel_to_polars(
         source: Contenu du fichier (bytes) ou buffer BytesIO.
         filename: Nom du fichier (pour choisir openpyxl vs xlrd).
         sheet_name: Nom ou index de feuille (comme pandas).
+        string_cells: Si True, lit toutes les colonnes en str (recommandé pour fichiers sinistres avec tirets).
     """
     if isinstance(source, bytes):
         buf = io.BytesIO(source)
@@ -36,5 +39,10 @@ def read_excel_to_polars(
     else:
         engine = "openpyxl"
 
-    pdf = pd.read_excel(buf, sheet_name=sheet_name, engine=engine)
+    read_kw: dict = {}
+    if string_cells:
+        # Toutes les cellules en texte : évite les inférences int64 sur des "-" / "- " / vides Excel
+        read_kw["dtype"] = str
+
+    pdf = pd.read_excel(buf, sheet_name=sheet_name, engine=engine, **read_kw)
     return pl.from_pandas(pdf)

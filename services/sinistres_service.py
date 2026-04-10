@@ -6,6 +6,7 @@ Service de gestion des sinistres
 """
 import streamlit as st
 import polars as pl
+import pandas as pd
 import io
 import re
 from typing import Optional
@@ -59,6 +60,45 @@ class SinistresService:
         return None
     
     @staticmethod
+    def _amount_expr(col_name: str) -> pl.Expr:
+        """
+        Convertit montants Excel (tirets, '- ', vides, virgule décimale, espaces milliers) en Float64.
+        """
+        s = pl.col(col_name).cast(pl.Utf8, strict=False).str.strip_chars()
+        low = s.str.to_lowercase()
+        s = (
+            pl.when(s.is_null() | (s.str.len_chars() == 0))
+            .then(None)
+            .when(
+                low.is_in(
+                    [
+                        "-",
+                        "—",
+                        "–",
+                        "--",
+                        "---",
+                        "- ",
+                        " -",
+                        "n/a",
+                        "na",
+                        "#n/a",
+                        "#na",
+                        "nan",
+                        "none",
+                        ".",
+                        "..",
+                    ]
+                )
+            )
+            .then(None)
+            .when(s.str.contains(r"^[\s\-\u2013\u2014\u00a0]+$"))
+            .then(None)
+            .otherwise(s)
+        )
+        s = s.str.replace(",", ".").str.replace_all(r"\s+", "")
+        return s.cast(pl.Float64, strict=False).fill_null(0.0)
+    
+    @staticmethod
     def normalize_columns(df: pl.DataFrame) -> pl.DataFrame:
         """Normalise les noms de colonnes du DataFrame sinistres."""
         
@@ -103,11 +143,11 @@ class SinistresService:
                 f"Colonnes disponibles: {cols_disponibles}"
             )
         
-        # Sélectionner et renommer
+        # Sélectionner et renommer (montants : parsing tolérant aux tirets / cellules vides Excel)
         return df.select([
-            pl.col(branche_col).cast(pl.Utf8).alias("Branche"),
-            pl.col(reglement_col).cast(pl.Float64).fill_null(0).alias("Total_Reglement"),
-            pl.col(cout_col).cast(pl.Float64).fill_null(0).alias("Cout_Total")
+            pl.col(branche_col).cast(pl.Utf8, strict=False).fill_null("").str.strip_chars().alias("Branche"),
+            SinistresService._amount_expr(reglement_col).alias("Total_Reglement"),
+            SinistresService._amount_expr(cout_col).alias("Cout_Total"),
         ])
     
     @staticmethod
@@ -128,9 +168,19 @@ class SinistresService:
         for filename, content, year in file_contents:
             buffer = io.BytesIO(content)
             
-            # Lire le fichier
+            # Lire le fichier (sinistres : tout en texte puis parsing montants tolérant)
             if filename.endswith('.csv'):
-                df = pl.read_csv(buffer)
+                buffer.seek(0)
+                try:
+                    pdf = pd.read_csv(
+                        buffer, dtype=str, keep_default_na=False, encoding="utf-8-sig"
+                    )
+                except UnicodeDecodeError:
+                    buffer.seek(0)
+                    pdf = pd.read_csv(
+                        buffer, dtype=str, keep_default_na=False, encoding="latin-1"
+                    )
+                df = pl.from_pandas(pdf)
             else:
                 # Pour Excel, lister les feuilles et choisir la bonne
                 buffer_check = io.BytesIO(content)
@@ -148,7 +198,9 @@ class SinistresService:
                 if target_sheet is None:
                     target_sheet = sheet_names[0]
                 
-                df = read_excel_to_polars(content, filename, sheet_name=target_sheet)
+                df = read_excel_to_polars(
+                    content, filename, sheet_name=target_sheet, string_cells=True
+                )
             
             # Normaliser et extraire les branches
             df_normalized = SinistresService.normalize_columns(df)
@@ -183,7 +235,17 @@ class SinistresService:
             # Lire le fichier
             sheet_info = "CSV"
             if filename.endswith('.csv'):
-                df = pl.read_csv(buffer)
+                buffer.seek(0)
+                try:
+                    pdf = pd.read_csv(
+                        buffer, dtype=str, keep_default_na=False, encoding="utf-8-sig"
+                    )
+                except UnicodeDecodeError:
+                    buffer.seek(0)
+                    pdf = pd.read_csv(
+                        buffer, dtype=str, keep_default_na=False, encoding="latin-1"
+                    )
+                df = pl.from_pandas(pdf)
             else:
                 # Pour Excel, lister les feuilles et choisir la bonne
                 buffer_check = io.BytesIO(content)
@@ -203,7 +265,9 @@ class SinistresService:
                 
                 sheet_info = f"{target_sheet} (feuilles: {', '.join(sheet_names)})"
                 
-                df = read_excel_to_polars(content, filename, sheet_name=target_sheet)
+                df = read_excel_to_polars(
+                    content, filename, sheet_name=target_sheet, string_cells=True
+                )
             
             # Debug: Afficher les colonnes lues
             st.write(f"📄 **{filename}** → {sheet_info}")
